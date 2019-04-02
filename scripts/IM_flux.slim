@@ -1,0 +1,51 @@
+
+
+// set up simulation parameters
+initialize() {
+	//defineConstant('outpath','/Users/cj/Desktop/imflux_test.trees'); //output path (uncomment for debugging or gui runs)
+	
+	//read in ice core CO2 data to use as proxy for migration rates
+	//data via: https://cdiac.ess-dive.lbl.gov/ftp/trends/co2/vostok.icecore.co2
+	t=c(1e5,1.1e5,2e5,2.1e5,3e5,3.1e5,4e5,4.1e5,5e5,5.1e5);
+	c=c(260,0,260,0,260,0,260,0,260,0);
+	defineConstant('times',t);
+	defineConstant('co2',c);
+	
+	//simulation parameters
+	initializeTreeSeq();
+	initializeMutationRate(1e-8); //faster to put down mutations on treeseqs with msprime if neutral, switch to 0 for parallel runs
+	initializeMutationType("m1", 0.5, "f", 0.0);
+	initializeGenomicElementType("g1", m1, 1.0);
+	initializeGenomicElement(g1, 0, 1e6);
+	initializeRecombinationRate(1e-8);
+}
+
+// create 2 populations of 10000 individuals 
+1 {
+	sim.addSubpop("p1", 1000);
+	sim.addSubpop("p2", 1000);
+	p1.setMigrationRates(p2,0.5);
+	p2.setMigrationRates(p1,0.5);
+	print("and we're off");
+}
+
+// set migration rates to 2.5% when CO2 exceeds 250ppm
+early() {
+	year_index=match(asFloat(sim.generation),times);
+	if(year_index>0){ 		//match returns -1 if none found								
+		if(co2[year_index]>250){
+			print("migration starting at generation"+sim.generation);
+			p1.setMigrationRates(p2,0.025);
+			p2.setMigrationRates(p1,0.025);
+		} else {
+			print("no migration starting at generation"+sim.generation);
+			p1.setMigrationRates(p2,0);
+			p2.setMigrationRates(p1,0);
+		}
+	};
+}
+
+// output final tree sequence
+515000 late() { 
+	sim.treeSeqOutput(outpath);
+}

@@ -1,0 +1,81 @@
+initialize() {
+
+// set up speciation by drift w/ BDMI model
+	cycles=readFile("~/Dropbox/speciation_periodic_migration/data/sim_cycles_01.txt");
+	t=c();
+	c=c();
+	for(i in cycles){
+		split=strsplit(i,"\t");
+		t=c(t,asFloat(split[0]));
+		c=c(c,asFloat(split[1]));
+	};
+	t=rev(t);
+	c=rev(c);
+	defineConstant('times',t);
+	defineConstant('co2',c);
+	
+	initializeMutationRate(1e-6);
+	
+	// m1 mutation type: BDMI locus a
+	initializeMutationType("m1", 1.0, "f", 0.5);
+	
+	// m2 mutation type: neutral
+	initializeMutationType("m2", 0.5, "f", 0.0);
+	
+	// m3 mutation type: BDMI locus b
+	initializeMutationType("m3", 1.0, "f", 0.5);
+	
+	// g1 genomic element type for locus a
+	initializeGenomicElementType("g1", m1, 1.0);
+	
+	// g2 genomic element type for locus b
+	initializeGenomicElementType("g2", m2, 1.0);
+	
+	// g3 genomic element type for other loci
+	initializeGenomicElementType("g3", m3, 1.0);
+	
+	// specify genomic regions (BDMI loci 1 site each)
+	initializeGenomicElement(g1, 0, 0);
+	initializeGenomicElement(g2, 1, 98);
+	initializeGenomicElement(g3, 99, 99);
+	initializeRecombinationRate(1e-8);
+}
+
+// create a population of 100 individuals
+1 {
+	sim.addSubpop("p1", 50);
+	sim.addSubpop("p2", 50);
+}
+
+early() {
+	year_index=match(asFloat(sim.generation),times);
+	if(year_index>0){ 		//match returns -1 if none found								
+		if(co2[year_index]>250){
+			print("migration starting at generation"+sim.generation);
+			p1.setMigrationRates(p2,0.02525);
+			p2.setMigrationRates(p1,0.02525);
+		} else {
+			print("no migration starting at generation"+sim.generation);
+			p1.setMigrationRates(p2,0);
+			p2.setMigrationRates(p1,0);
+		}
+	};
+}
+
+// delete bad mutations in p1 
+1: late() {
+	sim.mutations[sim.mutations.originGeneration == sim.generation & sim.mutations.subpopID == 2].setMutationType(m2);
+}
+
+// stop simulation when both loci have drifted to fixation
+1:6000000 late() {
+	count1 = sum(p1.genomes.countOfMutationsOfType(m1));
+	count2 = sum(p1.genomes.countOfMutationsOfType(m3));
+	if (count1 > 50 & count2 > 50)
+	{
+		sim.simulationFinished();
+		sim.outputFixedMutations();
+		line = paste(sim.generation);
+		writeFile("~/Dropbox/speciation_periodic_migration/data/simple_model_output/flux01.txt", line, append=T);
+	}
+}
