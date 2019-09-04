@@ -75,4 +75,4 @@ p3 <- ggplot(data = data.frame(x = 0), mapping = aes(x = x)) +
         axis.text.y = element_blank())
 
 fig <- p1 + p2 + p3
-ggsave("~/Dropbox/speciation_periodic_migration/figures/waiting_time.pdf", plot=fig, width = 10, height = 4, units = "in")
+ggsave("~/Dropbox/speciation_cyclical_migration/figures/waiting_time.pdf", plot=fig, width = 10, height = 4, units = "in")

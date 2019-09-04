@@ -1,7 +1,7 @@
 initialize() {
 
 // set up speciation by drift w/ BDMI model
-	cycles=readFile("~/Dropbox/speciation_periodic_migration/data/sim_cycles_50.txt");
+	cycles=readFile("~/Dropbox/speciation_cyclical_migration/sim_cycles_50.txt");
 	t=c();
 	c=c();
 	for(i in cycles){
@@ -14,16 +14,16 @@ initialize() {
 	defineConstant('times',t);
 	defineConstant('co2',c);
 	
-	initializeMutationRate(1e-6);
+	initializeMutationRate(1e-4);
 	
 	// m1 mutation type: BDMI locus a
-	initializeMutationType("m1", 1.0, "f", 0.5);
+	initializeMutationType("m1", 0.5, "f", 0);
 	
 	// m2 mutation type: neutral
-	initializeMutationType("m2", 0.5, "f", 0.0);
+	initializeMutationType("m2", 0.5, "f", 0);
 	
 	// m3 mutation type: BDMI locus b
-	initializeMutationType("m3", 1.0, "f", 0.5);
+	initializeMutationType("m3", 0.5, "f", 0);
 	
 	// g1 genomic element type for locus a
 	initializeGenomicElementType("g1", m1, 1.0);
@@ -36,15 +36,15 @@ initialize() {
 	
 	// specify genomic regions (BDMI loci 1 site each)
 	initializeGenomicElement(g1, 0, 0);
-	initializeGenomicElement(g2, 1, 98);
-	initializeGenomicElement(g3, 99, 99);
-	initializeRecombinationRate(1e-8);
+	initializeGenomicElement(g3, 1, 1);
+	initializeRecombinationRate(0);
 }
 
 // create a population of 100 individuals
+
 1 {
-	sim.addSubpop("p1", 50);
-	sim.addSubpop("p2", 50);
+	sim.addSubpop("p1", 100);
+	sim.addSubpop("p2", 100);
 }
 
 early() {
@@ -68,14 +68,14 @@ early() {
 }
 
 // stop simulation when both loci have drifted to fixation
-1:6000000 late() {
-	count1 = sum(p1.genomes.countOfMutationsOfType(m1));
-	count2 = sum(p1.genomes.countOfMutationsOfType(m3));
-	if (count1 > 50 & count2 > 50)
+1:1000000000 late() {
+	count1 = sum(p1.genomes.countOfMutationsOfType(m1)>=1);
+	count2 = sum(p1.genomes.countOfMutationsOfType(m3)>=1);
+	if (count1 == 200 & count2 == 200)
 	{
-		sim.simulationFinished();
-		sim.outputFixedMutations();
-		line = paste(sim.generation);
-		writeFile("~/Dropbox/speciation_periodic_migration/data/simple_model_output/flux50.txt", line, append=T);
-	}
+			sim.simulationFinished();
+			sim.outputFixedMutations();
+			line = paste(sim.generation);
+			writeFile("~/Dropbox/speciation_cyclical_migration/simple_model_output/flux50_neutral.txt", line, append=T);
+		}
 }

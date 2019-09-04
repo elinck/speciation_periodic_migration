@@ -11,9 +11,9 @@ parser.add_argument('--outfile')
 args=parser.parse_args()
 
 ## debug
-# args = argparse.Namespace(basedir="~/Dropbox/speciation_periodic_migration/simulations/msprime/periodic/",
+# args = argparse.Namespace(basedir="/Users/cj/Dropbox/speciation_cyclical_migration/simulations/msprime/periodic/",
 #                           n=0,
-#                           outfile="~/Desktop/test.txt")
+#                           outfile="/Users/cj/Desktop/test.txt")
 
 #pairwise IBS tract distribution function for summary stats
 def getPairwiseIbsTractLengths(x,y,positions,maxlen,min_len_to_keep=0):
@@ -61,8 +61,8 @@ with open(t+".vcf", "w") as vcf_file:
 
 ###############summary stats##############
 ##data structures for stats (note assumes 20 samples per population)
-pops={'0':[0,1,2,3,4,5,6,7,8,9],
-      '1':[10,11,12,13,14,15,16,17,18,19]}
+pops={'0':[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
+      '1':[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]}
 haps=np.array(ts1.genotype_matrix())
 positions=np.array([s.position for s in ts1.sites()])
 genotypes=allel.HaplotypeArray(haps).to_genotypes(ploidy=2)
@@ -73,10 +73,13 @@ genotype_allele_counts=genotypes.to_allele_counts()
 ##SNP stats
 segsites=np.shape(genotypes)[0]
 pi=allel.sequence_diversity(positions,allele_counts,start=1,stop=1e7)
-tajD=allel.tajima_d(ac=allele_counts,start=1,stop=1e7) #NOTE check for 0 v 1-based positions
+tajD=allel.tajima_d(ac=allele_counts,start=1,stop=1e7)
 thetaW=allel.watterson_theta(pos=positions,ac=allele_counts,start=1,stop=1e7)
 het_o=np.mean(allel.heterozygosity_observed(genotypes))
-fst=allel.stats.fst.average_weir_cockerham_fst(genotypes,[[0,1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17,18,19]],100)[0]
+fst=allel.stats.fst.average_weir_cockerham_fst(genotypes,
+     [[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
+      [20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]],
+     100)[0]
 dxy=allel.stats.diversity.sequence_divergence(positions,subpop_allele_counts['0'],subpop_allele_counts['1'])
 
 ##Identical-by-state haplotype block length stats (i.e. LD-type stats)
@@ -93,7 +96,7 @@ for j in bw_pairs:
 ibs_bw=[x for y in ibs_bw for x in y]
 ibs_bw_mean=np.mean(ibs_bw)
 ibs_bw_skew=stats.skew(ibs_bw)
-ibs_bw_blocks_over_1e5=len([x for x in ibs_bw if x > 1e5])
+ibs_bw_blocks_over_1e4=len([x for x in ibs_bw if x > 1e4])
 
 #within-population comparisons (must be a better way to get within-pop indicex pairs but this works)
 wi_0_pairs=list(itertools.product(pops['0'],pops['0']))
@@ -111,24 +114,24 @@ for j in wi_pairs:
 ibs_wi=[x for y in ibs_wi for x in y]
 ibs_wi_mean=np.mean(ibs_wi)
 ibs_wi_skew=stats.skew(ibs_wi)
-ibs_wi_blocks_over_1e5=len([x for x in ibs_wi if x > 1e5])
+ibs_wi_blocks_over_1e4=len([x for x in ibs_wi if x > 1e4])
 
 #output summary stats
-header="segsites pi thetaW tajD het_o fst dxy ibs_bw_mean ibs_bw_skew ibs_bw_blocks_over_1e5 ibs_wi_mean ibs_wi_skew ibs_wi_blocks_over_1e5\n"
+header="segsites pi thetaW tajD het_o fst dxy ibs_bw_mean ibs_bw_skew ibs_bw_blocks_over_1e4 ibs_wi_mean ibs_wi_skew ibs_wi_blocks_over_1e4\n"
 if not os.path.exists(args.outfile):
     out=open(args.outfile,'a')
     out.write(header)
     out.write(str(segsites)+ " "+str(pi)+" "+str(thetaW)+" "+str(tajD)+" "+
               str(het_o)+" "+str(fst)+" "+str(dxy)+" "+str(ibs_bw_mean)+" "+
-              str(ibs_bw_skew)+" "+str(ibs_bw_blocks_over_1e5)+" "+
+              str(ibs_bw_skew)+" "+str(ibs_bw_blocks_over_1e4)+" "+
               str(ibs_wi_mean)+" "+str(ibs_wi_skew)+" "+
-              str(ibs_wi_blocks_over_1e5)+"\n")
+              str(ibs_wi_blocks_over_1e4)+"\n")
     out.close()
 else:
     out=open(args.outfile,'a')
     out.write(str(segsites)+ " "+str(pi)+" "+str(thetaW)+" "+str(tajD)+" "+
               str(het_o)+" "+str(fst)+" "+str(dxy)+" "+str(ibs_bw_mean)+" "+
-              str(ibs_bw_skew)+" "+str(ibs_bw_blocks_over_1e5)+" "+
+              str(ibs_bw_skew)+" "+str(ibs_bw_blocks_over_1e4)+" "+
               str(ibs_wi_mean)+" "+str(ibs_wi_skew)+" "+
-              str(ibs_wi_blocks_over_1e5)+"\n")
+              str(ibs_wi_blocks_over_1e4)+"\n")
     out.close()
